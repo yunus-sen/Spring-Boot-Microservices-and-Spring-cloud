@@ -1,0 +1,52 @@
+*************************************otomatik configurasyon*****************************************
+server.port=8082
+spring.application.name=api-gateway
+eureka.client.service-url.defaultZone=http://localhost:8010/eureka
+spring.cloud.gateway.discovery.locator.enabled=true  //eurekaya kayıt yaptım.
+spring.cloud.gateway.discovery.locator.lower-case-service-id=true // eureka kayıtlarını büyük harf ile kayıt eder kücüge cevirmek icin ekledim 
+							http//localhost/eurekadakiörnekismi/metotlar
+							
+*********************************************************************************************************
+
+*****************************manuel congifurasyon ve gelişmiş filtreleme*************************************************
+server.port=8082
+spring.application.name=api-gateway
+eureka.client.service-url.defaultZone=http://localhost:8010/eureka
+spring.cloud.gateway.routes[0].id=users-status-check//özel yönlerdirme icin id verdim. degişebilirdi.	
+spring.cloud.gateway.routes[0].uri =lb://users-ws //eureka kayıtlı  projenin ismini buraya verdim eşleşmesi icin
+spring.cloud.gateway.routes[0].predicates[0]=Path=/users/status/check  //metot olarak gelen istek buraysa eşleşecek.
+spring.cloud.gateway.routes[0].predicates[1]=Method=Get   // ,Put ,Delete artırabilirdim.
+spring.cloud.gateway.routes[0].predicates[2]=Header=Authorization, Bearer (.*) // bu url deki metoda özel configurationlar yaptım.
+spring.cloud.gateway.routes[0].filters[0]=RemoveRequestHeader=Cookie
+spring.cloud.gateway.routes[0].filters[2]=AuthorizationHeaderFilter    //class ismi filtre ekledim. apply metodu calışacak
+    
+                                 http//localhost/users/status/check
+                                 
+örnek ismi vermedim cünkü path de gelen url de hangi örnegin calışacanı uri de belirttim. diger isteklerde calışmaz yanlız bu pathde calışır.
+
+spring.cloud.gateway.routes[0].predicates[0]=Path=/users-ws/users/status/check                        
+spring.cloud.gateway.routes[0].filters[1]=RewritePath=/users-ws/(?<segment>.*), /$\{segment}
+istekini deegiştirir alltakinin eklersem user-ws ile gelen path eşleştirip projede user-ws olmadan calıştırır. 
+********************************************************************************************************************************
+*********************************manuel ve otomatik birlikte çalışması*************************************************************
+server.port=8082
+spring.application.name=api-gateway
+eureka.client.service-url.defaultZone=http://localhost:8010/eureka
+
+spring.cloud.gateway.routes[0].id=users-status-check	
+spring.cloud.gateway.routes[0].uri =lb://users-ws
+spring.cloud.gateway.routes[0].predicates[0]=Path=/users/status/check
+spring.cloud.gateway.routes[0].predicates[1]=Method=Get
+spring.cloud.gateway.routes[0].filters[0]=RemoveRequestHeader=Cookie
+
+spring.cloud.gateway.discovery.locator.enabled=true
+spring.cloud.gateway.discovery.locator.lower-case-service-id=true 
+*********************************************************************************************************************************
+**************************************BELLİ YERDEKİ TÜM METODLARA FİLTRE UYG*******************************************************
+spring.cloud.gateway.routes[3].id=users-ws-get-update-delete	
+spring.cloud.gateway.routes[3].uri =lb://users-ws
+spring.cloud.gateway.routes[3].predicates[0]=Path=/users-ws/users/**
+spring.cloud.gateway.routes[3].predicates[1]=Method=GET,PUT,DELETE
+spring.cloud.gateway.routes[3].predicates[2]=Header=Authorization, Bearer (.*)
+spring.cloud.gateway.routes[3].filters[0]=RemoveRequestHeader=Cookie
+spring.cloud.gateway.routes[3].filters[1]=RewritePath=/users-ws/(?<segment>.*), /$\{segment}
